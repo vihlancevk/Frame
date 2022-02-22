@@ -8,9 +8,9 @@ VIDEOSEG = 0b800h
 LNGTH = 22d
 WDTH  = 3d
 
-Elems db 21h, 03h, 21h, 03h, 20h, 03h, 21h, 03h, 21h	; + _ +
-							; |   |
-							; + - +
+Elems db 21h, 03h, 21h, 03h, 20h, 03h, 21h, 03h, 21h	; !   03h  !
+							; 03h     03h
+							; !   03h  !
 
 ; Elems db 20h, 20h, 20h, 20h, 20h, 20h, 20h, 20h, 20h	; _ _ _
 							; _ _ _
@@ -162,7 +162,7 @@ lp1:		call CalcStPt
 		loop lp1
 		;================================================	
 		
-		mov si, offset Msg
+		mov si, offset Msg	; displaying text in a frame
 		sub di, 2d * LNGTH
 		add di, 2d
 		mov cx, LNGTH
@@ -285,11 +285,11 @@ skip12:		    mov bl, 01h
                     cmp [si], bl
                     je add1
                         mov si, CMD_LINE
-                        call FuncSub    ; function sub
+                        call FuncSub    	; function sub
                         jmp sub1
 
 add1:		    mov si, CMD_LINE
-                    call FuncAdd    ; function add
+                    call FuncAdd    		; function add
 
 sub1:		    mov si, CMD_LINE
                     add si, 3
@@ -311,12 +311,12 @@ skip22:		    mov bl, 01h
                     je add2
                         mov si, CMD_LINE
                         add si, 3
-                        call FuncSub    ; function sub
+                        call FuncSub    	; function sub
                         jmp sub2
 
 add2:		    mov si, CMD_LINE
                     add si, 3
-                    call FuncAdd    ; function add
+                    call FuncAdd    		; function add
 
 sub2:
                     
@@ -343,15 +343,12 @@ Start:	mov ax, VIDEOSEG
 lp2:	call DrawFrame
 	call ChangeCordStPr
         
-        mov cx, 65535d
-lp3:	nop
-        loop lp3
+		mov ax, 8600h	; pause for 2 seconds
+		mov cx, 0007h
+		mov dx, 0a120h
+		int 15h
         
-        mov cx, 25000d
-lp4:	nop
-        loop lp4
-        
-        mov ax, 0h
+        mov ax, 0h		; clearing the console
         mov di, 0h
         mov cx, 4000d
         rep stosw
