@@ -6,8 +6,9 @@ VIDEOSEG = 0b800h
 CONSOLE_WIDTH = 25d
 CONSOLE_LENGTH = 80d
 
-Msg db 'Botay$'
-MSG_SIZE = 5d
+Msg db 'Dear RT girls free me$'
+MSG_SIZE = 21d
+MSG_COLOR = 7400h
 
 FRAME_WIDTH  = 3d
 FRAME_LENGTH = MSG_SIZE + 2d
@@ -132,7 +133,7 @@ DrawFrame 	proc
 		call CalcStPt
 
 		mov si, offset Elems
-		mov ax, 7000h
+		mov ax, MSG_COLOR
 		mov cx, FRAME_LENGTH
 		call DrawLine
 		;================================================
@@ -151,7 +152,7 @@ lp1:		call CalcStPt
 		mul ah
 		add di, ax
 		
-		mov ax, 7000h
+		mov ax, MSG_COLOR
 		mov bx, cx
 		mov cx, FRAME_LENGTH
 		mov si, offset Elems
@@ -188,7 +189,7 @@ lp:		mov bl, [si]
 		add di, ax
 	
 		mov si, bx	
-		mov ax, 7000h
+		mov ax, MSG_COLOR
 		mov cx, FRAME_LENGTH
 		call DrawLine
 		;================================================
