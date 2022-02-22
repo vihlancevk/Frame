@@ -1,12 +1,16 @@
-; 25*80 - size of console
-
 .model tiny
 
 .data
 VIDEOSEG = 0b800h
 
-LNGTH = 22d
-WDTH  = 3d
+CONSOLE_WIDTH = 25d
+CONSOLE_LENGTH = 80d
+
+Msg db 'Botay$'
+MSG_SIZE = 5d
+
+FRAME_WIDTH  = 3d
+FRAME_LENGTH = MSG_SIZE + 2d
 
 Elems db 21h, 03h, 21h, 03h, 20h, 03h, 21h, 03h, 21h	; !   03h  !
 							; 03h     03h
@@ -17,12 +21,10 @@ Elems db 21h, 03h, 21h, 03h, 20h, 03h, 21h, 03h, 21h	; !   03h  !
 							; _ _ _
 							; '_' - Netflix space
 
-Msg db 'Dear RT girl free me'
-
 Status db 01h, 01h
 
 ;------------------------------------------------
-; Calculate a two-digit number
+; Calculate a two-digit number (decimal number system)
 ;
 ; Entry:	SI - addr of 2-byte array containing number
 ; Exit:		AH - two-digit number
@@ -57,12 +59,12 @@ CalcTwoDigitNum     endp
 
 CalcStPt	proc
 
-            	mov si, CMD_LINE
+		mov si, CMD_LINE
         	call CalcTwoDigitNum
-        	mov al, 80d * 2d
+        	mov al, CONSOLE_LENGTH * 2d
         	mul ah
         	mov di, ax
-        	
+
 		inc si        	
         	call CalcTwoDigitNum
         	mov al, 2d
@@ -86,7 +88,6 @@ CalcStPt	endp
 
 DrawLine	proc		; cld (Clear Dest Flag) (++)
 				; std (Set Dest Flag) (--)
-
 		mov al, [si]	; lodcb (Load String of )
 		inc si
 
@@ -132,7 +133,7 @@ DrawFrame 	proc
 
 		mov si, offset Elems
 		mov ax, 7000h
-		mov cx, LNGTH
+		mov cx, FRAME_LENGTH
 		call DrawLine
 		;================================================
 
@@ -141,18 +142,18 @@ DrawFrame 	proc
 		;------------------------------------------------
 		mov dh, 1d	
 
-		mov cx, WDTH
+		mov cx, FRAME_WIDTH
 		sub cx, 2d
 
 lp1:		call CalcStPt		
 		mov ah, dh
-		mov al, 80d * 2d
+		mov al, CONSOLE_LENGTH * 2d
 		mul ah
 		add di, ax
 		
 		mov ax, 7000h
 		mov bx, cx
-		mov cx, LNGTH
+		mov cx, FRAME_LENGTH
 		mov si, offset Elems
 		add si, 3d
 		call DrawLine
@@ -162,11 +163,10 @@ lp1:		call CalcStPt
 		loop lp1
 		;================================================	
 		
-		mov si, offset Msg	; displaying text in a frame
-		sub di, 2d * LNGTH
+		mov si, offset Msg		; displaying text in a frame
+		sub di, 2d * FRAME_LENGTH
 		add di, 2d
-		mov cx, LNGTH
-		sub cx, 2d
+		mov cx, MSG_SIZE
 
 lp:		mov bl, [si]
 		mov es:[di], bl
@@ -183,13 +183,13 @@ lp:		mov bl, [si]
 
 		call CalcStPt
 		mov ah, dh
-		mov al, 80d * 2
+		mov al, CONSOLE_LENGTH * 2d
 		mul ah
 		add di, ax
 	
 		mov si, bx	
 		mov ax, 7000h
-		mov cx, LNGTH
+		mov cx, FRAME_LENGTH
 		call DrawLine
 		;================================================
 
@@ -200,7 +200,7 @@ DrawFrame	endp
 ; Function add
 ;
 ; Entry:	SI - addr number
-; Exit:     	increasing the number by one
+; Exit:		increasing the number by one
 ; Destr:	AX, SI
 ;------------------------------------------------
 
@@ -210,19 +210,18 @@ FuncAdd		proc
        		mov al, [si]
         	cmp al, 09d
         	je TEN_ADD
-            		add al, 1h
+            		add al, 01h
             		mov [si], al
             		jmp NO_TEN_ADD
 
 TEN_ADD:	mov al, 30h
-            	mov [si], al
-            	dec si
-           	mov al, [si]
-            	add al, 1h
-            	mov [si], al
+		mov [si], al
+		dec si
+		mov al, [si]
+		add al, 1h
+		mov [si], al
 
 NO_TEN_ADD:
-
 		ret
 FuncAdd		endp
 
@@ -230,7 +229,7 @@ FuncAdd		endp
 ; Function sub
 ;
 ; Entry:	SI - addr number
-; Exit:         dec the number by one
+; Exit:		dec the number by one
 ; Destr:	AX, SI
 ;------------------------------------------------
 
@@ -260,7 +259,7 @@ FuncSub     endp
 ; Change coordinates start point
 ;
 ; Entry:	BP - bypass direction ( 01h - down, 00h - up)
-;           	DS - bypass direction ( 01h - right, 00h - left)
+;			DS - bypass direction ( 01h - right, 00h - left)
 ; Note:		ES - videoseg addr (0b800h)
 ; Exit:		new coordinates
 ; Destr:	AX, BX, SI, BP
@@ -276,7 +275,7 @@ ChangeCordStPr      proc
                         mov bl, 01h
                         mov [si], bl
 
-skip11:		    cmp ah, 22d
+skip11:		    cmp ah, CONSOLE_WIDTH - FRAME_WIDTH
                     jne skip12
                         mov bl, 00h
                         mov [si], bl
@@ -301,7 +300,7 @@ sub1:		    mov si, CMD_LINE
                         mov bl, 01h
                         mov [si], bl
 
-skip21:		    cmp ah, 50d
+skip21:		    cmp ah, CONSOLE_LENGTH - FRAME_LENGTH
                     jne skip22
                         mov bl, 00h
                         mov [si], bl
@@ -343,10 +342,10 @@ Start:	mov ax, VIDEOSEG
 lp2:	call DrawFrame
 	call ChangeCordStPr
         
-		mov ax, 8600h	; pause for 2 seconds
-		mov cx, 0007h
-		mov dx, 0a120h
-		int 15h
+	mov ax, 8600h		; pause for 0,4 second
+	mov cx, 0006h
+	mov dx, 1a80h
+	int 15h
         
         mov ax, 0h		; clearing the console
         mov di, 0h
@@ -359,4 +358,5 @@ lp2:	call DrawFrame
 
 	mov ax, 4c00h
 	int 21h
-end Start
+
+end 	Start
